@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 -- | A minimalistic Mustache-like syntax, truly logic-less,
 -- pure 'T.Text' template library
@@ -200,7 +201,7 @@ partialProcess' t c@Context{..} =
         (f,[]) -> Final $ toTextWithContext (const T.empty) c (content f)
         (p,p') -> G.Partial p p'
   where
-    trans (c',ts) t' =
+    trans (!c',ts) t' =
         case t' of
             Tag k     ->
                 case H.lookup k variables of
