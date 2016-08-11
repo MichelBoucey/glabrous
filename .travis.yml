@@ -17,5 +17,8 @@ before_install:
   - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar -xzO --wildcards '*/stack' > ~/.local/bin/stack
   - chmod a+x ~/.local/bin/stack
 
+install:
+  - stack setup --no-terminal
+
 script:
   - stack test --no-terminal
