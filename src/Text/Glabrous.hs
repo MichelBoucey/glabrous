@@ -90,7 +90,7 @@ fromList :: [(T.Text, T.Text)] -> Context
 fromList ts = Context { variables = H.fromList ts }
 
 -- | Extract 'Tag's from a 'Template' and build
--- a 'Context' with all its empty variables.
+-- a 'Context' with all its variables empty.
 fromTemplate :: Template -> Context
 fromTemplate t = setVariables ((\e -> (e,T.empty)) <$> tagsOf t) initContext
 
