@@ -102,8 +102,8 @@ readContextFile f = decode <$> L.readFile f
 --
 -- @
 -- {
---     "something": "something else"
---     "etc.": "...",
+--     "something": "something else",
+--     "etc.": "..."
 -- }
 -- @
 --
@@ -115,8 +115,8 @@ writeContextFile f c = L.writeFile f $ encodePretty c
 --
 -- @
 -- {
---     "something": ""
---     "etc.": "",
+--     "something": "",
+--     "etc.": ""
 -- }
 -- @
 --
