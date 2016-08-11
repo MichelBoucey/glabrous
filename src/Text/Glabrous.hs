@@ -99,11 +99,27 @@ readContextFile :: FilePath -> IO (Maybe Context)
 readContextFile f = decode <$> L.readFile f
 
 -- | Write a 'Context' to a file.
+--
+-- @
+-- {
+--     "something": "something else"
+--     "etc.": "...",
+-- }
+-- @
+--
 writeContextFile :: FilePath -> Context -> IO ()
 writeContextFile f c = L.writeFile f $ encodePretty c
 
 -- | Based on the given 'Context', write a
 -- 'Context' file with all its variables empty.
+--
+-- @
+-- {
+--     "something": ""
+--     "etc.": "",
+-- }
+-- @
+--
 initContextFile :: FilePath -> Context -> IO ()
 initContextFile f Context{..} = L.writeFile f $
     encodePretty Context { variables = H.map (const T.empty) variables }
