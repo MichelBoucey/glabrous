@@ -61,8 +61,8 @@ initContext = Context { variables = H.empty }
 
 -- | Populate with variables and/or update variables in the given 'Context'.
 --
--- >λ>setVariables [("something","something new"), ("about","haskell")] context
--- >Context {variables = fromList [("etc.","..."),("about","haskell"),("something","something new"),("name","")]}
+-- >λ>setVariables [("something","something new"), ("about","Haskell")] context
+-- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("something","something new"),("name","")]}
 setVariables :: [(T.Text,T.Text)] -> Context -> Context
 setVariables ts c@Context{..} =
     case uncons ts of
@@ -73,7 +73,7 @@ setVariables ts c@Context{..} =
 -- | Delete variables from a 'Context' by these names.
 --
 -- >λ>deleteVariables ["something"] context
--- >Context {variables = fromList [("etc.","..."),("about","haskell"),("name","")]}
+-- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("name","")]}
 deleteVariables :: [T.Text] -> Context -> Context
 deleteVariables ts c@Context{..} =
     case uncons ts of
@@ -221,9 +221,9 @@ partialProcess' t c@Context{..} =
         case t' of
             Tag k     ->
                 case H.lookup k variables of
-                    Just v  -> (addToken (Literal v) c', ts)
+                    Just v  -> (addToken (Literal v) c',ts)
                     Nothing -> (addToken t' c',ts ++ [k])
-            Literal _ -> (addToken t' c', ts)
+            Literal _ -> (addToken t' c',ts)
       where
         addToken a b = Template { content = content b ++ [a] }
 
