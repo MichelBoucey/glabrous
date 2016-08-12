@@ -1,5 +1,5 @@
 name:                glabrous
-version:             0.1.0.1
+version:             0.1.1.0
 synopsis:            A template library
 description:         A minimalistic, Mustache-like syntax, truly logic-less,
                      pure Text template library
@@ -12,10 +12,11 @@ copyright:           2016 (c) Michel Boucey
 category:            Text, Web
 build-type:          Simple
 cabal-version:       >=1.10
+extra-source-files:  README.md
 
 source-repository head
   type:     git
-  location: https://github.com/MichelBoucey/glabrous
+  location: https://github.com/MichelBoucey/glabrous.git
 
 library
   hs-source-dirs:      src
