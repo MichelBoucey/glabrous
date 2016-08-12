@@ -56,6 +56,7 @@ import qualified Data.Text.IO             as I
 import           Text.Glabrous.Internal
 import           Text.Glabrous.Types      as G
 
+-- | Optimize a 'Template' content after (many) partialProcess(') rewriting(s).
 pack :: Template -> Template
 pack t =
     Template { content = packC (content t) [] }
