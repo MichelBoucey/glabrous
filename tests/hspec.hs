@@ -88,8 +88,15 @@ main = hspec $ do
         it "apply to a template with a subcontext outputs a template with its tags" $
             (return $ partialProcess' template' pcontext) `shouldReturn` Partial {template = Template {content = [Literal "Affirmanti incumbit probatio. Lorem ",Literal " Dolor! ",Literal " sit amet, ",Tag "consectetur",Literal " adipiscing elit. Proin bibendum mauris ",Literal " Vitae! ",Literal " dui venenatis pretium. Maecenas vestibulum justo at accumsan ",Tag "mattis",Literal ". Nulla id finibus sem. Cras dolor nunc, consectetur in tincidunt id, facilisis in lorem. Nullam sed eros venenatis, tempor felis in, ultrices enim. Donec sit amet ligula ac orci cursus finibus ut eget lectus. Praesent feugiat massa non mi venenatis ",Literal " Faucibus! ",Literal ". Fabricando fit faber."]}, tags = ["consectetur","mattis"]}
 
+    describe "compress" $
+        it "optimize a template after partialProcess(')" $
+            (return $ compress $ partialProcess template' pcontext) `shouldReturn` Template {content = [Literal "Affirmanti incumbit probatio. Lorem  Dolor!  sit amet, ",Tag "consectetur",Literal " adipiscing elit. Proin bibendum mauris  Vitae!  dui venenatis pretium. Maecenas vestibulum justo at accumsan ",Tag "mattis",Literal ". Nulla id finibus sem. Cras dolor nunc, consectetur in tincidunt id, facilisis in lorem. Nullam sed eros venenatis, tempor felis in, ultrices enim. Donec sit amet ligula ac orci cursus finibus ut eget lectus. Praesent feugiat massa non mi venenatis  Faucibus! . Fabricando fit faber."]}
+
+    describe "tagsRename" $
+        it "renames tags for a new template" $
+            (return $ tagsRename [("consectetur","causatur"),("mattis","generis")] $ compress $ partialProcess template' pcontext) `shouldReturn` Template {content = [Literal "Affirmanti incumbit probatio. Lorem  Dolor!  sit amet, ",Tag "causatur",Literal " adipiscing elit. Proin bibendum mauris  Vitae!  dui venenatis pretium. Maecenas vestibulum justo at accumsan ",Tag "generis",Literal ". Nulla id finibus sem. Cras dolor nunc, consectetur in tincidunt id, facilisis in lorem. Nullam sed eros venenatis, tempor felis in, ultrices enim. Donec sit amet ligula ac orci cursus finibus ut eget lectus. Praesent feugiat massa non mi venenatis  Faucibus! . Fabricando fit faber."]}
+
     describe "partialProcess'" $ afterAll_ clean $
         it "apply to a template with a context outputs a final text" $
             (return $ partialProcess' template' context') `shouldReturn` Final "Affirmanti incumbit probatio. Lorem  Dolor!  sit amet,  Consectetur!  adipiscing elit. Proin bibendum mauris  Vitae!  dui venenatis pretium. Maecenas vestibulum justo at accumsan  Mattis! . Nulla id finibus sem. Cras dolor nunc, consectetur in tincidunt id, facilisis in lorem. Nullam sed eros venenatis, tempor felis in, ultrices enim. Donec sit amet ligula ac orci cursus finibus ut eget lectus. Praesent feugiat massa non mi venenatis  Faucibus! . Fabricando fit faber."
-
 
