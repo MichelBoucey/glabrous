@@ -22,7 +22,7 @@ module Text.Glabrous
     , isFinal
     , tagsOf
     , tagsRename
-    , pack
+    , compress
     , writeTemplateFile
     -- * Context
     , Context (..)
@@ -58,8 +58,8 @@ import           Text.Glabrous.Internal
 import           Text.Glabrous.Types      as G
 
 -- | Optimize a 'Template' content after (many) partialProcess(') rewriting(s).
-pack :: Template -> Template
-pack t =
+compress :: Template -> Template
+compress t =
     Template { content = packC (content t) [] }
   where
     packC ts !o = do
