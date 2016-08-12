@@ -22,6 +22,7 @@ module Text.Glabrous
     , tagsOf
     , isFinal
     , writeTemplateFile
+    , pack
     -- * Context
     , Context (..)
     -- ** Get a 'Context'
@@ -54,6 +55,31 @@ import qualified Data.Text.IO             as I
 
 import           Text.Glabrous.Internal
 import           Text.Glabrous.Types      as G
+
+pack :: Template -> Template
+pack t =
+    Template { content = packC (content t) [] }
+  where
+    packC ts !o = do
+        let (a,b) = span isL ts
+        if not (null a)
+            then packC b (o ++ [concatL a])
+            else if not (null b)
+                     then do let (a',b') = span (not.isL) b
+                             if not (null a')
+                                 then packC b' (o ++ a')
+                                 else if not (null b')
+                                          then packC b' o
+                                          else o
+                     else o
+      where
+        isL (Literal _) = True
+        isL (Tag _)     = False
+        concatL _ts =
+            foldr trans (Literal "") _ts
+          where
+            trans (Literal a) (Literal b) = Literal (a `T.append` b)
+            trans _           _           = undefined
 
 -- | Build an empty 'Context'.
 initContext :: Context
