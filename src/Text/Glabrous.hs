@@ -1,6 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 -- | A minimalistic Mustache-like syntax, truly logic-less,
 -- pure 'T.Text' template library
@@ -19,10 +19,11 @@ module Text.Glabrous
     , readTemplateFile
     -- ** 'Template' operations
     , toText
-    , tagsOf
     , isFinal
-    , writeTemplateFile
+    , tagsOf
+    , tagsRename
     , pack
+    , writeTemplateFile
     -- * Context
     , Context (..)
     -- ** Get a 'Context'
@@ -176,8 +177,8 @@ writeTemplateFile f t = I.writeFile f $ toText t
 -- as it is, with its 'Tag's, if they exist (no
 -- 'Context' is processed).
 toText :: Template -> T.Text
-toText t =
-    T.concat $ trans <$> content t
+toText Template{..} =
+    T.concat $ trans <$> content
   where
     trans (Literal c) = c
     trans (Tag k)     = T.concat ["{{",k,"}}"]
@@ -189,6 +190,16 @@ tagsOf Template{..} =
   where
     isTag (Tag _) = True
     isTag _       = False
+
+tagsRename :: [(T.Text,T.Text)] -> Template -> Template
+tagsRename ts Template{..} =
+    Template { content = rename <$> content }
+  where
+    rename t@(Tag n) =
+        case lookup n ts of
+            Just r  -> Tag r
+            Nothing -> t
+    rename l@(Literal _) = l
 
 -- | 'True' if a 'Template' has no more 'Tag'
 -- inside and can be used as a final 'T.Text'.
