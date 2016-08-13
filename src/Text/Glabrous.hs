@@ -57,23 +57,20 @@ import qualified Data.Text.IO             as I
 import           Text.Glabrous.Internal
 import           Text.Glabrous.Types      as G
 
--- | Optimize a 'Template' content after (many) partialProcess(') rewriting(s).
+-- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
 compress t =
-    Template { content = packC (content t) [] }
+    Template { content = go (content t) [] }
   where
-    packC ts !o = do
+    go ts !o = do
         let (a,b) = span isL ts
         if not (null a)
-            then packC b (o ++ [concatL a])
-            else if not (null b)
-                     then do let (a',b') = span (not.isL) b
-                             if not (null a')
-                                 then packC b' (o ++ a')
-                                 else if not (null b')
-                                          then packC b' o
-                                          else o
-                     else o
+            then case uncons b of
+                Just (c,d) -> go d (o ++ [concatL a] ++ [c])
+                Nothing    -> o ++ [concatL a]
+            else case uncons b of
+                Just (c,d) -> go d (o ++ [c])
+                Nothing    -> o
       where
         isL (Literal _) = True
         isL (Tag _)     = False
@@ -251,17 +248,15 @@ partialProcess Template{..} c =
 -- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, tags = ["tags","text"]}
 partialProcess' :: Template -> Context -> G.Result
 partialProcess' t c@Context{..} =
-    case foldl trans (Template { content = [] },[]) (content t) of
-        (f,[]) -> Final $ toTextWithContext (const T.empty) c (content f)
-        (p,p') -> G.Partial p p'
+    case foldl trans ([],[]) (content t) of
+        (f,[]) -> Final $ toTextWithContext (const T.empty) c f
+        (p,p') -> G.Partial Template { content = p } p'
   where
-    trans (!c',ts) t' =
+    trans (!c',!ts) t' =
         case t' of
             Tag k     ->
                 case H.lookup k variables of
-                    Just v  -> (addToken (Literal v) c',ts)
-                    Nothing -> (addToken t' c',ts ++ [k])
-            Literal _ -> (addToken t' c',ts)
-      where
-        addToken a b = Template { content = content b ++ [a] }
+                    Just v  -> (c' ++ [Literal v],ts)
+                    Nothing -> (c' ++ [t'],ts ++ [k])
+            Literal _ -> (c' ++ [t'],ts)
 
