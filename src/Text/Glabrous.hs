@@ -57,23 +57,20 @@ import qualified Data.Text.IO             as I
 import           Text.Glabrous.Internal
 import           Text.Glabrous.Types      as G
 
--- | Optimize a 'Template' content after (many) partialProcess(') rewriting(s).
+-- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
 compress t =
-    Template { content = packC (content t) [] }
+    Template { content = go (content t) [] }
   where
-    packC ts !o = do
+    go ts !o = do
         let (a,b) = span isL ts
         if not (null a)
-            then packC b (o ++ [concatL a])
-            else if not (null b)
-                     then do let (a',b') = span (not.isL) b
-                             if not (null a')
-                                 then packC b' (o ++ a')
-                                 else if not (null b')
-                                          then packC b' o
-                                          else o
-                     else o
+            then case uncons b of
+                Just (c,d) -> go d (o ++ [concatL a] ++ [c])
+                Nothing    -> o ++ [concatL a]
+            else case uncons b of
+                Just (c,d) -> go d (o ++ [c])
+                Nothing    -> o
       where
         isL (Literal _) = True
         isL (Tag _)     = False
