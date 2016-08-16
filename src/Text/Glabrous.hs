@@ -75,8 +75,8 @@ compress t =
       where
         isL (Literal _) = True
         isL (Tag _)     = False
-        concatL _ts =
-            foldr trans (Literal "") _ts
+        concatL =
+            foldr trans (Literal "")
           where
             trans (Literal a) (Literal b) = Literal (a `T.append` b)
             trans _           _           = undefined
