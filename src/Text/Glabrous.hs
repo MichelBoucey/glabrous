@@ -90,22 +90,26 @@ initContext = Context { variables = H.empty }
 -- >λ>setVariables [("something","something new"), ("about","Haskell")] context
 -- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("something","something new"),("name","")]}
 setVariables :: [(T.Text,T.Text)] -> Context -> Context
-setVariables ts c@Context{..} =
-    case uncons ts of
-        Just ((k,v),ts') ->
-            setVariables ts' Context { variables = H.insert k v variables }
-        Nothing          -> c
+setVariables ts Context{..} =
+    go ts variables
+  where
+    go _ts vs =
+        case uncons _ts of
+            Just ((k,v),ts') -> go ts' $ H.insert k v vs
+            Nothing          -> Context { variables = vs }
 
 -- | Delete variables from a 'Context' by these names.
 --
 -- >λ>deleteVariables ["something"] context
 -- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("name","")]}
 deleteVariables :: [T.Text] -> Context -> Context
-deleteVariables ts c@Context{..} =
-    case uncons ts of
-        Just (k,ts') ->
-            deleteVariables ts' Context { variables = H.delete k variables }
-        Nothing      -> c
+deleteVariables ts Context{..} =
+    go ts variables
+  where
+    go _ts vs =
+        case uncons _ts of
+            Just (k,ts') -> go ts' $ H.delete k vs
+            Nothing      -> Context { variables = vs }
 
 -- | Build a 'Context' from a list of 'Tag's and replacement 'T.Text's.
 --
