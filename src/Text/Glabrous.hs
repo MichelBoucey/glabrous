@@ -64,11 +64,12 @@ compress t =
   where
     go ts !o = do
         let (a,b) = span isL ts
+            u = uncons b
         if not (null a)
-            then case uncons b of
+            then case u of
                 Just (c,d) -> go d (o ++ [concatL a] ++ [c])
                 Nothing    -> o ++ [concatL a]
-            else case uncons b of
+            else case u of
                 Just (c,d) -> go d (o ++ [c])
                 Nothing    -> o
       where
