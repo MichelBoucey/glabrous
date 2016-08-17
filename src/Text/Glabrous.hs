@@ -45,8 +45,9 @@ module Text.Glabrous
 
     , setVariables
     , deleteVariables
-    , unsetContext
+    , variablesOf
     , isSet
+    , unsetContext
 
     -- ** JSON 'Context' file
 
@@ -190,6 +191,10 @@ unsetContext Context {..} = do
 isSet :: Context -> Bool
 isSet Context {..} =
     H.foldr (\v b -> b && v /= T.empty) True variables
+
+-- | Get the list of the given 'Context' variables
+variablesOf :: Context -> [T.Text]
+variablesOf Context {..} = H.keys variables
 
 -- | Get a 'Template' from a file.
 readTemplateFile :: FilePath -> IO (Either String Template)
