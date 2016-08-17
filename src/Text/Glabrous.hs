@@ -11,34 +11,50 @@
 
 module Text.Glabrous
     (
+
     -- * Template
+
       Template (..)
     , Tag
+
     -- ** Get a 'Template'
+
     , fromText
     , readTemplateFile
+
     -- ** 'Template' operations
+
     , toText
     , isFinal
     , tagsOf
     , tagsRename
     , compress
     , writeTemplateFile
+
     -- * Context
+
     , Context (..)
+
     -- ** Get a 'Context'
+
     , initContext
     , fromList
     , fromTemplate
+
     -- ** 'Context' operations
+
     , setVariables
     , deleteVariables
     , unsetContext
+
     -- ** JSON 'Context' file
+
     , readContextFile
     , writeContextFile
     , initContextFile
+
     -- * Processing
+
     , process
     , processWithDefault
     , partialProcess
@@ -46,6 +62,7 @@ module Text.Glabrous
     , partialProcess'
     ) where
 
+import           Control.Monad
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
@@ -59,23 +76,23 @@ import           Text.Glabrous.Types      as G
 
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
-compress t =
-    Template { content = go (content t) [] }
+compress Template{..} =
+    Template { content = go content [] }
   where
-    go ts !o = do
-        let (a,b) = span isL ts
+    go ts !ac = do
+        let (a,b) = span isLiteral ts
             u = uncons b
         if not (null a)
             then case u of
-                Just (c,d) -> go d (o ++ [concatL a] ++ [c])
-                Nothing    -> o ++ [concatL a]
+                Just (c,d) -> go d (ac ++ [concatLiterals a] ++ [c])
+                Nothing    -> ac ++ [concatLiterals a]
             else case u of
-                Just (c,d) -> go d (o ++ [c])
-                Nothing    -> o
+                Just (e,f) -> go f (ac ++ [e])
+                Nothing    -> ac
       where
-        isL (Literal _) = True
-        isL (Tag _)     = False
-        concatL =
+        isLiteral (Literal _) = True
+        isLiteral (Tag _)     = False
+        concatLiterals =
             foldr trans (Literal "")
           where
             trans (Literal a) (Literal b) = Literal (a `T.append` b)
@@ -163,9 +180,8 @@ initContextFile f Context{..} = L.writeFile f $
 unsetContext :: Context -> Maybe Context
 unsetContext Context{..} = do
     let vs = H.filter (== T.empty) variables
-    if vs /= H.empty
-       then Just Context { variables = vs }
-       else Nothing
+    guard (vs /= H.empty)
+    return Context { variables = vs }
 
 -- | Get a 'Template' from a file.
 readTemplateFile :: FilePath -> IO (Either String Template)
