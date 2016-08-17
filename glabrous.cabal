@@ -1,5 +1,5 @@
 name:                glabrous
-version:             0.1.1.0
+version:             0.1.2.0
 synopsis:            A template library
 description:         A minimalistic, Mustache-like syntax, truly logic-less,
                      pure Text template library
