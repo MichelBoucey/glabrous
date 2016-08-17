@@ -71,6 +71,10 @@ main = hspec $ do
         it "gets a Context made of unset variables of the given context" $
         fromJust <$> unsetContext <$> setVariables variablesList <$> fromTemplate <$> fromRight' <$> readTemplateFile templateFile `shouldReturn` Context {variables = H.fromList [("tortor",""),("commodo",""),("fermentum",""),("rhoncus",""),("bibendum",""),("venenatis","")]}
  
+    describe "isSet" $
+        it "true if all variables are not empty" $
+        (return $ isSet context') `shouldReturn` True
+ 
     describe "writeContextFile" $
         it "writes a context to a file" $ do
             !acontext <- fromJust <$> readContextFile contextFile

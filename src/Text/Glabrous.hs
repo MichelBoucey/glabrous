@@ -12,7 +12,7 @@
 module Text.Glabrous
     (
 
-    -- * Template
+    -- * 'Template'
 
       Template (..)
     , Tag
@@ -31,7 +31,7 @@ module Text.Glabrous
     , compress
     , writeTemplateFile
 
-    -- * Context
+    -- * 'Context'
 
     , Context (..)
 
@@ -46,6 +46,7 @@ module Text.Glabrous
     , setVariables
     , deleteVariables
     , unsetContext
+    , isSet
 
     -- ** JSON 'Context' file
 
@@ -60,6 +61,7 @@ module Text.Glabrous
     , partialProcess
     , G.Result (..)
     , partialProcess'
+
     ) where
 
 import           Control.Monad
@@ -76,7 +78,7 @@ import           Text.Glabrous.Types      as G
 
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
-compress Template{..} =
+compress Template {..} =
     Template { content = go content [] }
   where
     go ts !ac = do
@@ -107,7 +109,7 @@ initContext = Context { variables = H.empty }
 -- >λ>setVariables [("something","something new"), ("about","Haskell")] context
 -- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("something","something new"),("name","")]}
 setVariables :: [(T.Text,T.Text)] -> Context -> Context
-setVariables ts Context{..} =
+setVariables ts Context {..} =
     go ts variables
   where
     go _ts vs =
@@ -120,7 +122,7 @@ setVariables ts Context{..} =
 -- >λ>deleteVariables ["something"] context
 -- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("name","")]}
 deleteVariables :: [T.Text] -> Context -> Context
-deleteVariables ts Context{..} =
+deleteVariables ts Context {..} =
     go ts variables
   where
     go _ts vs =
@@ -136,8 +138,8 @@ deleteVariables ts Context{..} =
 fromList :: [(T.Text, T.Text)] -> Context
 fromList ts = Context { variables = H.fromList ts }
 
--- | Extract 'Tag's from a 'Template' and build
--- a 'Context' with all its variables empty.
+-- | Build an adhoc 'Context' for the given
+-- 'Template' with all its variables empty.
 fromTemplate :: Template -> Context
 fromTemplate t = setVariables ((\e -> (e,T.empty)) <$> tagsOf t) initContext
 
@@ -168,7 +170,7 @@ writeContextFile f c = L.writeFile f $ encodePretty c
 -- @
 --
 initContextFile :: FilePath -> Context -> IO ()
-initContextFile f Context{..} = L.writeFile f $
+initContextFile f Context {..} = L.writeFile f $
     encodePretty Context { variables = H.map (const T.empty) variables }
 
 -- | Build 'Just' a (sub)'Context' made of unset variables
@@ -178,10 +180,16 @@ initContextFile f Context{..} = L.writeFile f $
 -- >Just (Context {variables = fromList [("name","")]})
 --
 unsetContext :: Context -> Maybe Context
-unsetContext Context{..} = do
+unsetContext Context {..} = do
     let vs = H.filter (== T.empty) variables
     guard (vs /= H.empty)
     return Context { variables = vs }
+
+-- | 'True' if the all variables of
+-- the given 'Context' are not empty
+isSet :: Context -> Bool
+isSet Context {..} =
+    H.foldr (\v b -> b && v /= T.empty) True variables
 
 -- | Get a 'Template' from a file.
 readTemplateFile :: FilePath -> IO (Either String Template)
@@ -195,7 +203,7 @@ writeTemplateFile f t = I.writeFile f $ toText t
 -- as it is, with its 'Tag's, if they exist (no
 -- 'Context' is processed).
 toText :: Template -> T.Text
-toText Template{..} =
+toText Template {..} =
     T.concat $ trans <$> content
   where
     trans (Literal c) = c
@@ -203,14 +211,14 @@ toText Template{..} =
 
 -- | Get the list of 'Tag's in the given 'Template'.
 tagsOf :: Template -> [Tag]
-tagsOf Template{..} =
+tagsOf Template {..} =
     (\(Tag k) -> k) <$> filter isTag content
   where
     isTag (Tag _) = True
     isTag _       = False
 
 tagsRename :: [(T.Text,T.Text)] -> Template -> Template
-tagsRename ts Template{..} =
+tagsRename ts Template {..} =
     Template { content = rename <$> content }
   where
     rename t@(Tag n) =
@@ -222,7 +230,7 @@ tagsRename ts Template{..} =
 -- | 'True' if a 'Template' has no more 'Tag'
 -- inside and can be used as a final 'T.Text'.
 isFinal :: Template -> Bool
-isFinal Template{..} =
+isFinal Template {..} =
     allLiteral content
   where
     allLiteral t =
@@ -244,12 +252,12 @@ processWithDefault :: T.Text    -- ^ Default replacement text
                    -> Template
                    -> Context
                    -> T.Text
-processWithDefault d Template{..} c = toTextWithContext (const d) c content
+processWithDefault d Template {..} c = toTextWithContext (const d) c content
 
 -- | Process a (sub)'Context' present in the given template, leaving
 -- untouched, if they exist, other 'Tag's, to obtain a new template.
 partialProcess :: Template -> Context -> Template
-partialProcess Template{..} c =
+partialProcess Template {..} c =
     Template { content = transTags content c }
   where
     transTags ts Context{..} =
@@ -268,7 +276,7 @@ partialProcess Template{..} c =
 -- >λ>partialProcess' template context
 -- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, tags = ["tags","text"]}
 partialProcess' :: Template -> Context -> G.Result
-partialProcess' t c@Context{..} =
+partialProcess' t c@Context {..} =
     case foldl trans ([],[]) (content t) of
         (f,[]) -> Final $ toTextWithContext (const T.empty) c f
         (p,p') -> G.Partial Template { content = p } p'
