@@ -13,17 +13,14 @@ module Text.Glabrous
     (
 
     -- * 'Template'
-
       Template (..)
     , Tag
 
     -- ** Get a 'Template'
-
     , fromText
     , readTemplateFile
 
     -- ** 'Template' operations
-
     , toText
     , isFinal
     , tagsOf
@@ -32,17 +29,14 @@ module Text.Glabrous
     , writeTemplateFile
 
     -- * 'Context'
-
     , Context (..)
 
     -- ** Get a 'Context'
-
     , initContext
     , fromList
     , fromTemplate
 
     -- ** 'Context' operations
-
     , setVariables
     , deleteVariables
     , variablesOf
@@ -50,13 +44,11 @@ module Text.Glabrous
     , unsetContext
 
     -- ** JSON 'Context' file
-
     , readContextFile
     , writeContextFile
     , initContextFile
 
     -- * Processing
-
     , process
     , processWithDefault
     , partialProcess
@@ -187,7 +179,7 @@ unsetContext Context {..} = do
     return Context { variables = vs }
 
 -- | 'True' if the all variables of
--- the given 'Context' are not empty
+-- the given 'Context' are not empty.
 isSet :: Context -> Bool
 isSet Context {..} =
     H.foldr (\v b -> b && v /= T.empty) True variables
@@ -205,8 +197,8 @@ writeTemplateFile :: FilePath -> Template -> IO ()
 writeTemplateFile f t = I.writeFile f $ toText t
 
 -- | Output the content of the given 'Template'
--- as it is, with its 'Tag's, if they exist (no
--- 'Context' is processed).
+-- as it is, with its 'Tag's, if they exist. No
+-- 'Context' is processed.
 toText :: Template -> T.Text
 toText Template {..} =
     T.concat $ trans <$> content
@@ -265,7 +257,7 @@ partialProcess :: Template -> Context -> Template
 partialProcess Template {..} c =
     Template { content = transTags content c }
   where
-    transTags ts Context{..} =
+    transTags ts Context {..} =
         trans <$> ts
       where
         trans i@(Tag k) =

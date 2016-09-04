@@ -8,7 +8,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Michel Boucey
 maintainer:          michel.boucey@gmail.com
-copyright:           2016 (c) Michel Boucey
+copyright:           Copyright (c) 2016 - Michel Boucey
 category:            Text, Web
 build-type:          Simple
 cabal-version:       >=1.10
@@ -16,7 +16,7 @@ extra-source-files:  README.md
 
 source-repository head
   type:     git
-  location: https://github.com/MichelBoucey/glabrous.git
+  location: git://github.com/MichelBoucey/glabrous.git
 
 library
   hs-source-dirs:      src
