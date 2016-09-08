@@ -85,8 +85,6 @@ compress Template {..} =
                 Just (e,f) -> go f (ac ++ [e])
                 Nothing    -> ac
       where
-        isLiteral (Literal _) = True
-        isLiteral (Tag _)     = False
         concatLiterals =
             foldr trans (Literal "")
           where
@@ -227,16 +225,7 @@ tagsRename ts Template {..} =
 -- | 'True' if a 'Template' has no more 'Tag'
 -- inside and can be used as a final 'T.Text'.
 isFinal :: Template -> Bool
-isFinal Template {..} =
-    allLiteral content
-  where
-    allLiteral t =
-        case uncons t of
-            Just (t',ts) ->
-                case t' of
-                    Literal _ -> allLiteral ts
-                    Tag _     -> False
-            Nothing      -> True
+isFinal Template {..} = all isLiteral content
 
 -- | Process, discard 'Tag's which are not in the 'Context'
 -- and leave them without replacement text in the final 'T.Text'.

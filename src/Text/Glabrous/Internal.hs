@@ -29,6 +29,10 @@ fromText t =
         Right ts -> Right Template { content = ts }
         Left e   -> Left e
 
+isLiteral :: Token -> Bool
+isLiteral (Literal _) = True
+isLiteral _           = False
+
 tokens :: Parser [Token]
 tokens =
     many' token
