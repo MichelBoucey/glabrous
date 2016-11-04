@@ -10,52 +10,52 @@
 --
 
 module Text.Glabrous
-    (
+  (
 
-    -- * 'Template'
-      Template (..)
-    , Tag
+  -- * 'Template'
+    Template (..)
+  , Tag
 
-    -- ** Get a 'Template'
-    , fromText
-    , readTemplateFile
+  -- ** Get a 'Template'
+  , fromText
+  , readTemplateFile
 
-    -- ** 'Template' operations
-    , toText
-    , isFinal
-    , tagsOf
-    , tagsRename
-    , compress
-    , writeTemplateFile
+  -- ** 'Template' operations
+  , toText
+  , isFinal
+  , tagsOf
+  , tagsRename
+  , compress
+  , writeTemplateFile
 
-    -- * 'Context'
-    , Context (..)
+  -- * 'Context'
+  , Context (..)
 
-    -- ** Get a 'Context'
-    , initContext
-    , fromList
-    , fromTemplate
+  -- ** Get a 'Context'
+  , initContext
+  , fromList
+  , fromTemplate
 
-    -- ** 'Context' operations
-    , setVariables
-    , deleteVariables
-    , variablesOf
-    , isSet
-    , unsetContext
+  -- ** 'Context' operations
+  , setVariables
+  , deleteVariables
+  , variablesOf
+  , isSet
+  , unsetContext
 
-    -- ** JSON 'Context' file
-    , readContextFile
-    , writeContextFile
-    , initContextFile
+  -- ** JSON 'Context' file
+  , readContextFile
+  , writeContextFile
+  , initContextFile
 
-    -- * Processing
-    , process
-    , processWithDefault
-    , partialProcess
-    , G.Result (..)
-    , partialProcess'
+  -- * Processing
+  , process
+  , processWithDefault
+  , partialProcess
+  , G.Result (..)
+  , partialProcess'
 
-    ) where
+  ) where
 
 import           Control.Monad
 import           Data.Aeson
@@ -71,22 +71,22 @@ import           Text.Glabrous.Types      as G
 
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
-compress Template {..} =
-    Template { content = go content [] }
+compress Template{..} =
+  Template { content = go content [] }
   where
     go ts !ac = do
-        let (a,b) = span isLiteral ts
-            u = uncons b
-        if not (null a)
-            then case u of
-                Just (c,d) -> go d (ac ++ [concatLiterals a] ++ [c])
-                Nothing    -> ac ++ [concatLiterals a]
-            else case u of
-                Just (e,f) -> go f (ac ++ [e])
-                Nothing    -> ac
+      let (a,b) = span isLiteral ts
+          u = uncons b
+      if not (null a)
+        then case u of
+          Just (c,d) -> go d (ac ++ [concatLiterals a] ++ [c])
+          Nothing    -> ac ++ [concatLiterals a]
+        else case u of
+          Just (e,f) -> go f (ac ++ [e])
+          Nothing    -> ac
       where
         concatLiterals =
-            foldr trans (Literal "")
+          foldr trans (Literal "")
           where
             trans (Literal a) (Literal b) = Literal (a `T.append` b)
             trans _           _           = undefined
@@ -100,26 +100,26 @@ initContext = Context { variables = H.empty }
 -- >λ>setVariables [("something","something new"), ("about","Haskell")] context
 -- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("something","something new"),("name","")]}
 setVariables :: [(T.Text,T.Text)] -> Context -> Context
-setVariables ts Context {..} =
-    go ts variables
+setVariables ts Context{..} =
+  go ts variables
   where
     go _ts vs =
-        case uncons _ts of
-            Just ((k,v),ts') -> go ts' $ H.insert k v vs
-            Nothing          -> Context { variables = vs }
+      case uncons _ts of
+        Just ((k,v),ts') -> go ts' $ H.insert k v vs
+        Nothing          -> Context { variables = vs }
 
 -- | Delete variables from a 'Context' by these names.
 --
 -- >λ>deleteVariables ["something"] context
 -- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("name","")]}
 deleteVariables :: [T.Text] -> Context -> Context
-deleteVariables ts Context {..} =
-    go ts variables
+deleteVariables ts Context{..} =
+  go ts variables
   where
     go _ts vs =
-        case uncons _ts of
-            Just (k,ts') -> go ts' $ H.delete k vs
-            Nothing      -> Context { variables = vs }
+      case uncons _ts of
+        Just (k,ts') -> go ts' $ H.delete k vs
+        Nothing      -> Context { variables = vs }
 
 -- | Build a 'Context' from a list of 'Tag's and replacement 'T.Text's.
 --
@@ -162,7 +162,7 @@ writeContextFile f c = L.writeFile f $ encodePretty c
 --
 initContextFile :: FilePath -> Context -> IO ()
 initContextFile f Context {..} = L.writeFile f $
-    encodePretty Context { variables = H.map (const T.empty) variables }
+  encodePretty Context { variables = H.map (const T.empty) variables }
 
 -- | Build 'Just' a (sub)'Context' made of unset variables
 -- of the given context, or 'Nothing'.
@@ -172,19 +172,19 @@ initContextFile f Context {..} = L.writeFile f $
 --
 unsetContext :: Context -> Maybe Context
 unsetContext Context {..} = do
-    let vs = H.filter (== T.empty) variables
-    guard (vs /= H.empty)
-    return Context { variables = vs }
+  let vs = H.filter (== T.empty) variables
+  guard (vs /= H.empty)
+  return Context { variables = vs }
 
 -- | 'True' if the all variables of
 -- the given 'Context' are not empty.
 isSet :: Context -> Bool
-isSet Context {..} =
-    H.foldr (\v b -> b && v /= T.empty) True variables
+isSet Context{..} =
+  H.foldr (\v b -> b && v /= T.empty) True variables
 
 -- | Get the list of the given 'Context' variables
 variablesOf :: Context -> [T.Text]
-variablesOf Context {..} = H.keys variables
+variablesOf Context{..} = H.keys variables
 
 -- | Get a 'Template' from a file.
 readTemplateFile :: FilePath -> IO (Either String Template)
@@ -198,34 +198,34 @@ writeTemplateFile f t = I.writeFile f $ toText t
 -- as it is, with its 'Tag's, if they exist. No
 -- 'Context' is processed.
 toText :: Template -> T.Text
-toText Template {..} =
-    T.concat $ trans <$> content
+toText Template{..} =
+  T.concat $ trans <$> content
   where
     trans (Literal c) = c
     trans (Tag k)     = T.concat ["{{",k,"}}"]
 
 -- | Get the list of 'Tag's in the given 'Template'.
 tagsOf :: Template -> [Tag]
-tagsOf Template {..} =
-    (\(Tag k) -> k) <$> filter isTag content
+tagsOf Template{..} =
+  (\(Tag k) -> k) <$> filter isTag content
   where
     isTag (Tag _) = True
     isTag _       = False
 
 tagsRename :: [(T.Text,T.Text)] -> Template -> Template
-tagsRename ts Template {..} =
-    Template { content = rename <$> content }
+tagsRename ts Template{..} =
+  Template { content = rename <$> content }
   where
     rename t@(Tag n) =
-        case lookup n ts of
-            Just r  -> Tag r
-            Nothing -> t
+      case lookup n ts of
+        Just r  -> Tag r
+        Nothing -> t
     rename l@(Literal _) = l
 
 -- | 'True' if a 'Template' has no more 'Tag'
 -- inside and can be used as a final 'T.Text'.
 isFinal :: Template -> Bool
-isFinal Template {..} = all isLiteral content
+isFinal Template{..} = all isLiteral content
 
 -- | Process, discard 'Tag's which are not in the 'Context'
 -- and leave them without replacement text in the final 'T.Text'.
@@ -234,25 +234,26 @@ process = processWithDefault T.empty
 
 -- | Process and replace missing variables in 'Context'
 -- with the given default replacement 'T.Text'.
-processWithDefault :: T.Text    -- ^ Default replacement text
-                   -> Template
-                   -> Context
-                   -> T.Text
-processWithDefault d Template {..} c = toTextWithContext (const d) c content
+processWithDefault
+  :: T.Text    -- ^ Default replacement text
+  -> Template
+  -> Context
+  -> T.Text
+processWithDefault d Template{..} c = toTextWithContext (const d) c content
 
 -- | Process a (sub)'Context' present in the given template, leaving
 -- untouched, if they exist, other 'Tag's, to obtain a new template.
 partialProcess :: Template -> Context -> Template
-partialProcess Template {..} c =
-    Template { content = transTags content c }
+partialProcess Template{..} c =
+  Template { content = transTags content c }
   where
-    transTags ts Context {..} =
-        trans <$> ts
+    transTags ts Context{..} =
+      trans <$> ts
       where
         trans i@(Tag k) =
-            case H.lookup k variables of
-                Just v  -> Literal v
-                Nothing -> i
+          case H.lookup k variables of
+            Just v  -> Literal v
+            Nothing -> i
         trans t = t
 
 -- | Process a (sub)'Context' present in the given template, and
@@ -262,16 +263,16 @@ partialProcess Template {..} c =
 -- >λ>partialProcess' template context
 -- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, tags = ["tags","text"]}
 partialProcess' :: Template -> Context -> G.Result
-partialProcess' t c@Context {..} =
-    case foldl trans ([],[]) (content t) of
-        (f,[]) -> Final $ toTextWithContext (const T.empty) c f
-        (p,p') -> G.Partial Template { content = p } p'
+partialProcess' t c@Context{..} =
+  case foldl trans ([],[]) (content t) of
+    (f,[]) -> Final $ toTextWithContext (const T.empty) c f
+    (p,p') -> G.Partial Template { content = p } p'
   where
     trans (!c',!ts) t' =
-        case t' of
-            Tag k     ->
-                case H.lookup k variables of
-                    Just v  -> (c' ++ [Literal v],ts)
-                    Nothing -> (c' ++ [t'],ts ++ [k])
-            Literal _ -> (c' ++ [t'],ts)
+      case t' of
+        Tag k     ->
+          case H.lookup k variables of
+            Just v  -> (c' ++ [Literal v],ts)
+            Nothing -> (c' ++ [t'],ts ++ [k])
+        Literal _ -> (c' ++ [t'],ts)
 

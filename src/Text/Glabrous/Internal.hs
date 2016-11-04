@@ -13,7 +13,7 @@ import           Text.Glabrous.Types  as G
 
 toTextWithContext :: (T.Text -> T.Text) -> Context -> [Token] -> T.Text
 toTextWithContext tagDefault Context{..} ts =
-    T.concat $ trans <$> ts
+  T.concat $ trans <$> ts
   where
     trans (Tag k)     = fromMaybe (tagDefault k) (H.lookup k variables)
     trans (Literal c) = c
@@ -25,9 +25,9 @@ toTextWithContext tagDefault Context{..} ts =
 --
 fromText :: T.Text -> Either String Template
 fromText t =
-    case parseOnly tokens t of
-        Right ts -> Right Template { content = ts }
-        Left e   -> Left e
+  case parseOnly tokens t of
+    Right ts -> Right Template { content = ts }
+    Left e   -> Left e
 
 isLiteral :: Token -> Bool
 isLiteral (Literal _) = True
@@ -35,20 +35,20 @@ isLiteral _           = False
 
 tokens :: Parser [Token]
 tokens =
-    many' token
+  many' token
   where
     token = literal <|> tag <|> leftover
     leftover = do
-        c <- takeWhile1 $ not . content
-        return (Literal c)
+      c <- takeWhile1 $ not . content
+      return (Literal c)
     literal = do
-        c <- takeWhile1 content
-        return (Literal c)
+      c <- takeWhile1 content
+      return (Literal c)
     tag = do
-        _ <- string "{{"
-        Literal t <- literal
-        _ <- string "}}"
-        return (Tag t)
+      _ <- string "{{"
+      Literal t <- literal
+      _ <- string "}}"
+      return (Tag t)
     content '}' = False
     content '{' = False
     content _   = True
