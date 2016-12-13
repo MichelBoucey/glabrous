@@ -8,6 +8,7 @@ import qualified Data.HashMap.Strict as H
 import qualified Data.Text           as T
 import           Data.Serialize
 import           Data.Serialize.Text ()
+import           Control.Arrow       (second)
 import           GHC.Generics
 
 data Token
@@ -31,7 +32,7 @@ data Context =
 
 instance ToJSON Context where
   toJSON (Context h) =
-    object $ (\(k,v) -> (k,String v)) <$> H.toList h
+    object (second String <$> H.toList h)
 
 instance FromJSON Context where
   parseJSON (Object o) = return
@@ -42,6 +43,6 @@ type Tag = T.Text
 
 data Result
   = Final !T.Text
-  | Partial { template :: !Template , tags :: ![Tag] }
+  | Partial { template :: !Template , context :: !Context }
   deriving (Eq, Show)
 
