@@ -7,7 +7,7 @@ import           Data.Maybe
 import           Data.Text
 import           System.Directory        (removeFile)
 import           Test.Hspec
-import           Text.Glabrous
+import           Text.Glabrous           as G
 import           Text.Glabrous.Types
 
 templateText :: Text
@@ -90,7 +90,7 @@ main = hspec $ do
 
     describe "partialProcess'" $
         it "apply to a template with a subcontext outputs a template with its tags" $
-            (return $ partialProcess' template' pcontext) `shouldReturn` Partial {template = Template {content = [Literal "Affirmanti incumbit probatio. Lorem ",Literal " Dolor! ",Literal " sit amet, ",Tag "consectetur",Literal " adipiscing elit. Proin bibendum mauris ",Literal " Vitae! ",Literal " dui venenatis pretium. Maecenas vestibulum justo at accumsan ",Tag "mattis",Literal ". Nulla id finibus sem. Cras dolor nunc, consectetur in tincidunt id, facilisis in lorem. Nullam sed eros venenatis, tempor felis in, ultrices enim. Donec sit amet ligula ac orci cursus finibus ut eget lectus. Praesent feugiat massa non mi venenatis ",Literal " Faucibus! ",Literal ". Fabricando fit faber."]}, tags = ["consectetur","mattis"]}
+            (return $ partialProcess' template' pcontext) `shouldReturn` Partial {template = Template {content = [Literal "Affirmanti incumbit probatio. Lorem ",Literal " Dolor! ",Literal " sit amet, ",Tag "consectetur",Literal " adipiscing elit. Proin bibendum mauris ",Literal " Vitae! ",Literal " dui venenatis pretium. Maecenas vestibulum justo at accumsan ",Tag "mattis",Literal ". Nulla id finibus sem. Cras dolor nunc, consectetur in tincidunt id, facilisis in lorem. Nullam sed eros venenatis, tempor felis in, ultrices enim. Donec sit amet ligula ac orci cursus finibus ut eget lectus. Praesent feugiat massa non mi venenatis ",Literal " Faucibus! ",Literal ". Fabricando fit faber."]}, G.context =  Context {variables = H.fromList [("consectetur",""),("mattis","")]}}
 
     describe "compress" $
         it "optimize a template after partialProcess(')" $
