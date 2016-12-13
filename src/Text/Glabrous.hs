@@ -33,6 +33,7 @@ module Text.Glabrous
 
   -- ** Get a 'Context'
   , initContext
+  , fromTagsList
   , fromList
   , fromTemplate
 
@@ -129,12 +130,18 @@ deleteVariables ts Context{..} =
 fromList :: [(T.Text, T.Text)] -> Context
 fromList ts = Context { variables = H.fromList ts }
 
--- | Build an adhoc 'Context' for the given
--- 'Template' with all its variables empty.
+-- | Build an unset 'Context' from a list of 'Tag's.
+--
+-- >λ>fromTagsList ["something","etc."]
+-- >Context {variables = fromList [("etc.",""),("something","")]}
+fromTagsList :: [T.Text] -> Context
+fromTagsList ts = fromList $ (\t -> (t,T.empty)) <$> ts
+
+-- | Build an unset ad hoc 'Context' from the given 'Template'.
 fromTemplate :: Template -> Context
 fromTemplate t = setVariables ((\e -> (e,T.empty)) <$> tagsOf t) initContext
 
--- | Get a 'Context' from a file.
+-- | Get a 'Context' from a JSON file.
 readContextFile :: FilePath -> IO (Maybe Context)
 readContextFile f = decode <$> L.readFile f
 
@@ -150,7 +157,7 @@ readContextFile f = decode <$> L.readFile f
 writeContextFile :: FilePath -> Context -> IO ()
 writeContextFile f c = L.writeFile f $ encodePretty c
 
--- | Based on the given 'Context', write a
+-- | Based on the given 'Context', write a JSON
 -- 'Context' file with all its variables empty.
 --
 -- @
@@ -182,7 +189,7 @@ isSet :: Context -> Bool
 isSet Context{..} =
   H.foldr (\v b -> b && v /= T.empty) True variables
 
--- | Get the list of the given 'Context' variables
+-- | Get the list of the given 'Context' variables.
 variablesOf :: Context -> [T.Text]
 variablesOf Context{..} = H.keys variables
 
@@ -228,7 +235,7 @@ isFinal :: Template -> Bool
 isFinal Template{..} = all isLiteral content
 
 -- | Process, discard 'Tag's which are not in the 'Context'
--- and leave them without replacement text in the final 'T.Text'.
+-- and replace them with nothing in the final 'T.Text'.
 process :: Template -> Context -> T.Text
 process = processWithDefault T.empty
 
@@ -257,20 +264,20 @@ partialProcess Template{..} c =
         trans t = t
 
 -- | Process a (sub)'Context' present in the given template, and
--- get either a 'Final' 'T.Text' or a new 'Template' with the list
--- of its 'Tag's.
+-- get either a 'Final' 'T.Text' or a new 'Template' with its unset
+-- ad hoc 'Context'.
 --
 -- >λ>partialProcess' template context
--- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, tags = ["tags","text"]}
+-- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, context = Context {variables = fromList [("text",""),("tags","")]}}
 partialProcess' :: Template -> Context -> G.Result
 partialProcess' t c@Context{..} =
   case foldl trans ([],[]) (content t) of
     (f,[]) -> Final $ toTextWithContext (const T.empty) c f
-    (p,p') -> G.Partial Template { content = p } p'
+    (p,p') -> G.Partial Template { content = p } (fromTagsList p')
   where
     trans (!c',!ts) t' =
       case t' of
-        Tag k     ->
+        Tag k ->
           case H.lookup k variables of
             Just v  -> (c' ++ [Literal v],ts)
             Nothing -> (c' ++ [t'],ts ++ [k])
