@@ -29,7 +29,7 @@ library
                      , base >= 4.7 && < 5
                      , bytestring >= 0.10.6
                      , cereal >= 0.4.1
-                     , cereal-text >= 0.1.0
+                     , cereal-text >= 0.1.0.2
                      , either >= 4.4.1
                      , text >= 1.2.2
                      , unordered-containers >= 0.2.5
