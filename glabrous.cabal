@@ -1,5 +1,5 @@
 name:                glabrous
-version:             0.2.2
+version:             0.2.3
 synopsis:            A template DSL library
 description:         A minimalistic, Mustache-like syntax, truly logic-less,
                      pure Text template DSL library
@@ -35,18 +35,18 @@ library
                      , unordered-containers >= 0.2.5.1 && < 0.3
 
   default-language:    Haskell2010
-  GHC-options:       -Wall
+  GHC-options:         -Wall
 
 test-suite tests
   type:                exitcode-stdio-1.0
   hs-source-dirs:      tests
   main-is:             hspec.hs
-  build-depends:       hspec >= 2.1.10
-                     , base >= 4.8 && < 5
-                     , directory >= 1.2
-                     , either >= 4.4
-                     , glabrous
-                     , text >= 1.2
-                     , unordered-containers >= 0.2
+  build-depends:       base >= 4.8 && < 5
+                     , directory == 1.2.*
+                     , either == 4.4.*
+                     , glabrous >= 0.2.2 && < 0.3
+                     , hspec >= 2.1.10 && < 2.4
+                     , text == 1.2.*
+                     , unordered-containers == 0.2.*
   default-language:    Haskell2010
 
