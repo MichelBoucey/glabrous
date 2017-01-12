@@ -21,10 +21,11 @@ module Text.Glabrous
   , readTemplateFile
 
   -- ** 'Template' operations
-  , toText
-  , isFinal
   , tagsOf
   , tagsRename
+  , isFinal
+  , toText
+  , toFinalText
   , compress
   , writeTemplateFile
 
@@ -202,14 +203,22 @@ writeTemplateFile :: FilePath -> Template -> IO ()
 writeTemplateFile f t = I.writeFile f $ toText t
 
 -- | Output the content of the given 'Template'
--- as it is, with its 'Tag's, if they exist. No
--- 'Context' is processed.
+-- as it is, with its 'Tag's, if they exist.
 toText :: Template -> T.Text
 toText Template{..} =
   T.concat $ trans <$> content
   where
     trans (Literal c) = c
     trans (Tag k)     = T.concat ["{{",k,"}}"]
+
+-- | Output the content of the given 'Template'
+-- with all its 'Tag's removed.
+toFinalText :: Template -> T.Text
+toFinalText Template{..} =
+  foldl trans T.empty content
+  where
+    trans o (Literal l) = o `T.append` l
+    trans o (Tag _) = o
 
 -- | Get the list of 'Tag's in the given 'Template'.
 tagsOf :: Template -> [Tag]
