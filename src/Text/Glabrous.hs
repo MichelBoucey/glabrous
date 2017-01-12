@@ -99,8 +99,8 @@ initContext = Context { variables = H.empty }
 
 -- | Populate with variables and/or update variables in the given 'Context'.
 --
--- >λ>setVariables [("something","something new"), ("about","Haskell")] context
--- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("something","something new"),("name","")]}
+-- >λ>setVariables [("tag","replacement"), ("theme","Haskell")] context
+-- >Context {variables = fromList [("etc.","..."),("theme","Haskell"),("tag","replacement"),("name","")]}
 setVariables :: [(T.Text,T.Text)] -> Context -> Context
 setVariables ts Context{..} =
   go ts variables
@@ -112,8 +112,8 @@ setVariables ts Context{..} =
 
 -- | Delete variables from a 'Context' by these names.
 --
--- >λ>deleteVariables ["something"] context
--- >Context {variables = fromList [("etc.","..."),("about","Haskell"),("name","")]}
+-- >λ>deleteVariables ["tag"] context
+-- >Context {variables = fromList [("etc.","..."),("theme","Haskell"),("name","")]}
 deleteVariables :: [T.Text] -> Context -> Context
 deleteVariables ts Context{..} =
   go ts variables
@@ -125,16 +125,16 @@ deleteVariables ts Context{..} =
 
 -- | Build a 'Context' from a list of 'Tag's and replacement 'T.Text's.
 --
--- >λ>fromList [("something","something else"), ("etc.","...")]
--- >Context {variables = fromList [("etc.","..."),("something","something else")]}
+-- >λ>fromList [("tag","replacement"), ("etc.","...")]
+-- >Context {variables = fromList [("etc.","..."),("tag","replacement")]}
 --
 fromList :: [(T.Text, T.Text)] -> Context
 fromList ts = Context { variables = H.fromList ts }
 
 -- | Build an unset 'Context' from a list of 'Tag's.
 --
--- >λ>fromTagsList ["something","etc."]
--- >Context {variables = fromList [("etc.",""),("something","")]}
+-- >λ>fromTagsList ["tag","etc."]
+-- >Context {variables = fromList [("etc.",""),("tag","")]}
 fromTagsList :: [T.Text] -> Context
 fromTagsList ts = fromList $ (\t -> (t,T.empty)) <$> ts
 
@@ -150,7 +150,7 @@ readContextFile f = decode <$> L.readFile f
 --
 -- @
 -- {
---     "something": "something else",
+--     "tag": "replacement",
 --     "etc.": "..."
 -- }
 -- @
@@ -163,7 +163,7 @@ writeContextFile f c = L.writeFile f $ encodePretty c
 --
 -- @
 -- {
---     "something": "",
+--     "tag": "",
 --     "etc.": ""
 -- }
 -- @
