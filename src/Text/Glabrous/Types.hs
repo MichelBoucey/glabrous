@@ -27,7 +27,7 @@ instance Serialize Template
 
 data Context =
   Context
-    { variables :: H.HashMap T.Text T.Text }
+    { variables :: !(H.HashMap T.Text T.Text) }
     deriving (Eq, Show)
 
 instance ToJSON Context where
@@ -36,13 +36,13 @@ instance ToJSON Context where
 
 instance FromJSON Context where
   parseJSON (Object o) = return
-    Context { variables = H.fromList $ (\(k,String v) -> (k,v)) <$> H.toList o }
-  parseJSON _         = fail "expected an object"
+    Context { variables = H.fromList ((\(k,String v) -> (k,v)) <$> H.toList o) }
+  parseJSON _          = fail "expected an object"
 
 type Tag = T.Text
 
 data Result
   = Final !T.Text
-  | Partial { template :: !Template , context :: !Context }
+  | Partial { template :: !Template, context :: !Context }
   deriving (Eq, Show)
 
