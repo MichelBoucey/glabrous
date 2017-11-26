@@ -1,5 +1,5 @@
 name:                glabrous
-version:             0.3.3
+version:             0.3.4
 synopsis:            A template DSL library
 description:         A minimalistic, Mustache-like syntax, truly logic-less,
                      pure Text template DSL library
