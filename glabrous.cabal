@@ -24,7 +24,7 @@ library
                      , Text.Glabrous.Types
   other-modules:       Text.Glabrous.Internal
   build-depends:       aeson >= 0.8.0.2 && < 1.4
-                     , aeson-pretty >= 0.7.2 && < 0.9
+                     , aeson-pretty >= 0.8.0 && < 0.9
                      , attoparsec >= 0.12.1.6 && < 0.14
                      , base >= 4.8.1.0 && < 5
                      , bytestring >= 0.10.6 && < 0.11
