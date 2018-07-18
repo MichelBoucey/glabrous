@@ -21,6 +21,7 @@ module Text.Glabrous
   , readTemplateFile
 
   -- ** 'Template' operations
+  , insert
   , tagsOf
   , tagsRename
   , isFinal
@@ -201,6 +202,23 @@ readTemplateFile f = fromText <$> I.readFile f
 -- | Write a 'Template' to a file.
 writeTemplateFile :: FilePath -> Template -> IO ()
 writeTemplateFile f t = I.writeFile f $ toText t
+
+-- | get 'Just' a new 'Template' by inserting a 'Template'
+-- into another one by replacing the 'Tag' named, or 'Nothing'.
+insert :: Template       -- ^ The Template to insert in
+       -> T.Text         -- ^ The Tag name to be replaced
+       -> Template       -- ^ The Template to be inserted
+       -> Maybe Template -- ^ The new Template, or Nothing
+insert te tn te' =
+  if Tag tn `elem` content te
+    then Just Template { content = foldl trans [] (content te) }
+    else Nothing
+  where
+    trans o t@(Tag tn') =
+      if tn' == tn
+        then o ++ content te'
+        else o ++ [t]
+    trans o l = o ++ [l]
 
 -- | Output the content of the given 'Template'
 -- as it is, with its 'Tag's, if they exist.
