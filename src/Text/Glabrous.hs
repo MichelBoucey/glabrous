@@ -45,6 +45,7 @@ module Text.Glabrous
   , variablesOf
   , isSet
   , unsetContext
+  -- , join
 
   -- ** JSON 'Context' file
   , readContextFile
@@ -60,7 +61,7 @@ module Text.Glabrous
 
   ) where
 
-import           Control.Monad
+import           Control.Monad            (guard)
 import           Data.Aeson
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
@@ -108,7 +109,7 @@ setVariables ts Context{..} =
   where
     go _ts vs =
       case uncons _ts of
-        Just ((k,v),ts') -> go ts' $ H.insert k v vs
+        Just ((k,v),ts') -> go ts' (H.insert k v vs)
         Nothing          -> Context { variables = vs }
 
 -- | Delete variables from a 'Context' by these names.
@@ -121,7 +122,7 @@ deleteVariables ts Context{..} =
   where
     go _ts vs =
       case uncons _ts of
-        Just (k,ts') -> go ts' $ H.delete k vs
+        Just (k,ts') -> go ts' (H.delete k vs)
         Nothing      -> Context { variables = vs }
 
 -- | Build a 'Context' from a list of 'Tag's and replacement 'T.Text's.
@@ -146,7 +147,12 @@ fromTemplate t = setVariables ((\e -> (e,T.empty)) <$> tagsOf t) initContext
 -- | Get a 'Context' from a JSON file.
 readContextFile :: FilePath -> IO (Maybe Context)
 readContextFile f = decode <$> L.readFile f
-
+{-
+join :: Context
+     -> Context
+     -> Maybe Context
+join = undefined
+-}
 -- | Write a 'Context' to a file.
 --
 -- @
@@ -157,7 +163,7 @@ readContextFile f = decode <$> L.readFile f
 -- @
 --
 writeContextFile :: FilePath -> Context -> IO ()
-writeContextFile f c = L.writeFile f $ encodePretty c
+writeContextFile f c = L.writeFile f (encodePretty c)
 
 -- | Based on the given 'Context', write a JSON
 -- 'Context' file with all its variables empty.
@@ -170,7 +176,7 @@ writeContextFile f c = L.writeFile f $ encodePretty c
 -- @
 --
 initContextFile :: FilePath -> Context -> IO ()
-initContextFile f Context {..} = L.writeFile f $
+initContextFile f Context{..} = L.writeFile f $
   encodePretty Context { variables = H.map (const T.empty) variables }
 
 -- | Build 'Just' a (sub)'Context' made of unset variables
@@ -201,7 +207,7 @@ readTemplateFile f = fromText <$> I.readFile f
 
 -- | Write a 'Template' to a file.
 writeTemplateFile :: FilePath -> Template -> IO ()
-writeTemplateFile f t = I.writeFile f $ toText t
+writeTemplateFile f t = I.writeFile f (toText t)
 
 -- | get 'Just' a new 'Template' by inserting a 'Template'
 -- into another one by replacing the 'Tag' named, or 'Nothing'.
@@ -209,10 +215,9 @@ insert :: Template       -- ^ The Template to insert in
        -> T.Text         -- ^ The Tag name to be replaced
        -> Template       -- ^ The Template to be inserted
        -> Maybe Template -- ^ The new Template, or Nothing
-insert te tn te' =
-  if Tag tn `elem` content te
-    then Just Template { content = foldl trans [] (content te) }
-    else Nothing
+insert te tn te' = do
+  guard (Tag tn `elem` content te)
+  return Template { content = foldl trans [] (content te) }
   where
     trans o t@(Tag tn') =
       if tn' == tn
@@ -224,7 +229,7 @@ insert te tn te' =
 -- as it is, with its 'Tag's, if they exist.
 toText :: Template -> T.Text
 toText Template{..} =
-  T.concat $ trans <$> content
+  T.concat (trans <$> content)
   where
     trans (Literal c) = c
     trans (Tag k)     = T.concat ["{{",k,"}}"]
@@ -299,7 +304,7 @@ partialProcess Template{..} c =
 partialProcess' :: Template -> Context -> G.Result
 partialProcess' t c@Context{..} =
   case foldl trans ([],[]) (content t) of
-    (f,[]) -> Final $ toTextWithContext (const T.empty) c f
+    (f,[]) -> Final (toTextWithContext (const T.empty) c f)
     (p,p') -> G.Partial Template { content = p } (fromTagsList p')
   where
     trans (!c',!ts) t' =
