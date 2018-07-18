@@ -21,7 +21,6 @@ module Text.Glabrous
   , readTemplateFile
 
   -- ** 'Template' operations
-  , insert
   , tagsOf
   , tagsRename
   , isFinal
@@ -29,6 +28,7 @@ module Text.Glabrous
   , toFinalText
   , compress
   , writeTemplateFile
+  , insert
 
   -- * 'Context'
   , Context (..)
@@ -45,7 +45,7 @@ module Text.Glabrous
   , variablesOf
   , isSet
   , unsetContext
-  -- , join
+  , join
 
   -- ** JSON 'Context' file
   , readContextFile
@@ -147,12 +147,18 @@ fromTemplate t = setVariables ((\e -> (e,T.empty)) <$> tagsOf t) initContext
 -- | Get a 'Context' from a JSON file.
 readContextFile :: FilePath -> IO (Maybe Context)
 readContextFile f = decode <$> L.readFile f
-{-
+
+-- | Join two 'Context's if they don't share variables
+-- name, or get the intersection 'Context' out of them.
 join :: Context
      -> Context
-     -> Maybe Context
-join = undefined
--}
+     -> Either Context Context
+join c c' = do
+  let i = H.intersection (variables c) (variables c')
+  if i == H.empty
+    then Right Context { variables = H.union (variables c) (variables c') }
+    else Left Context { variables = i }
+
 -- | Write a 'Context' to a file.
 --
 -- @
@@ -214,7 +220,7 @@ writeTemplateFile f t = I.writeFile f (toText t)
 insert :: Template       -- ^ The Template to insert in
        -> T.Text         -- ^ The Tag name to be replaced
        -> Template       -- ^ The Template to be inserted
-       -> Maybe Template -- ^ The new Template, or Nothing
+       -> Maybe Template -- ^ Just the new Template, or Nothing
 insert te tn te' = do
   guard (Tag tn `elem` content te)
   return Template { content = foldl trans [] (content te) }
