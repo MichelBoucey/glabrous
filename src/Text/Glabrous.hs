@@ -29,6 +29,7 @@ module Text.Glabrous
   , compress
   , writeTemplateFile
   , insert
+  , insertMany
 
   -- * 'Context'
   , Context (..)
@@ -66,7 +67,7 @@ import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
-import           Data.List                (uncons)
+import           Data.List                (intersect,uncons)
 import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
@@ -233,6 +234,27 @@ insert te t te' = do
         then o ++ content te'
         else o ++ [t']
     trans o l = o ++ [l]
+
+-- | get 'Just' a new 'Template' by inserting many 'Template's,
+-- if there is at least one tag correspondence, or 'Nothing'.
+--
+-- >λ>insertMany t0 [(Tag "template1",t1),(Tag "template2",t2)]
+insertMany :: Template -> [(Token,Template)] -> Maybe Template
+insertMany te ttps = do
+  guard (tagsOf te `intersect` (fst <$> ttps) /= mempty)
+  return Template { content = foldl trans [] (content te) }
+  where
+    trans o li@(Literal _) = o ++ [li]
+    trans o ta@(Tag _) =
+      case lookupTemplate ta ttps of
+        Nothing  -> o ++ [ta]
+        Just te' -> o ++ content te'
+    lookupTemplate (Literal _) _ = Nothing
+    lookupTemplate _ []          = Nothing
+    lookupTemplate t (p:ps) =
+      if fst p == t
+        then Just (snd p)
+        else lookupTemplate t ps
 
 -- | Output the content of the given 'Template'
 -- as it is, with its 'Tag's, if they exist.
