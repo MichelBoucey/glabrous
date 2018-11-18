@@ -49,7 +49,7 @@ main = hspec $ do
 
     describe "tagsOf" $
         it "returns the list of tags in a template" $
-            tagsOf <$> fromRight' <$> readTemplateFile templateFile `shouldReturn` ["ipsum","tortor","lectus","vehicula","bibendum","condimentum","tellus","faucibus","cursus","commodo","vestibulum","lobortis","fermentum","maximus","venenatis","sagittis","vitae","rhoncus"]
+            tagsOf <$> fromRight' <$> readTemplateFile templateFile `shouldReturn` [Tag "ipsum",Tag "tortor",Tag "lectus",Tag "vehicula",Tag "bibendum",Tag "condimentum",Tag "tellus",Tag "faucibus",Tag "cursus",Tag "commodo",Tag "vestibulum",Tag "lobortis",Tag "fermentum",Tag "maximus",Tag "venenatis",Tag "sagittis",Tag "vitae",Tag "rhoncus"]
 
     describe "toText" $
         it "returns the template as it is" $
