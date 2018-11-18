@@ -18,16 +18,16 @@ data Token
 
 instance Serialize Token
 
-data Template =
+newtype Template =
   Template
-    { content :: ![Token] }
+    { content :: [Token] }
     deriving (Eq, Show, Generic)
 
 instance Serialize Template
 
-data Context =
+newtype Context =
   Context
-    { variables :: !(H.HashMap T.Text T.Text) }
+    { variables :: H.HashMap T.Text T.Text }
     deriving (Eq, Show)
 
 instance ToJSON Context where
@@ -38,8 +38,6 @@ instance FromJSON Context where
   parseJSON (Object o) = return
     Context { variables = H.fromList ((\(k,String v) -> (k,v)) <$> H.toList o) }
   parseJSON _          = fail "expected an object"
-
-type Tag = T.Text
 
 data Result
   = Final !T.Text

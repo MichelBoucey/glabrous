@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TupleSections     #-}
 
 -- | A minimalistic Mustache-like syntax, truly logic-less,
 -- pure 'T.Text' template library
@@ -14,7 +15,6 @@ module Text.Glabrous
 
   -- * 'Template'
     Template (..)
-  , Tag
 
   -- ** Get a 'Template'
   , fromText
@@ -56,13 +56,13 @@ module Text.Glabrous
   , process
   , processWithDefault
   , partialProcess
-  , G.Result (..)
+  , Result (..)
   , partialProcess'
 
   ) where
 
 import           Control.Monad            (guard)
-import           Data.Aeson
+import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
@@ -71,7 +71,7 @@ import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
 import           Text.Glabrous.Internal
-import           Text.Glabrous.Types      as G
+import           Text.Glabrous.Types
 
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
@@ -138,11 +138,11 @@ fromList ts = Context { variables = H.fromList ts }
 -- >λ>fromTagsList ["tag","etc."]
 -- >Context {variables = fromList [("etc.",""),("tag","")]}
 fromTagsList :: [T.Text] -> Context
-fromTagsList ts = fromList $ (\t -> (t,T.empty)) <$> ts
+fromTagsList ts = fromList $ (,T.empty) <$> ts
 
 -- | Build an unset ad hoc 'Context' from the given 'Template'.
 fromTemplate :: Template -> Context
-fromTemplate t = setVariables ((\e -> (e,T.empty)) <$> tagsOf t) initContext
+fromTemplate t = setVariables ((\(Tag e) -> (e,T.empty)) <$> tagsOf t) initContext
 
 -- | Get a 'Context' from a JSON file.
 readContextFile :: FilePath -> IO (Maybe Context)
@@ -216,19 +216,22 @@ writeTemplateFile :: FilePath -> Template -> IO ()
 writeTemplateFile f t = I.writeFile f (toText t)
 
 -- | get 'Just' a new 'Template' by inserting a 'Template'
--- into another one by replacing the 'Tag' named, or 'Nothing'.
+-- into another one by replacing the 'Tag', or 'Nothing'.
+--
+-- >λ>insert t0 (Tag "template1") t1
 insert :: Template       -- ^ The Template to insert in
-       -> T.Text         -- ^ The Tag name to be replaced
+       -> Token          -- ^ The Tag to be replaced
        -> Template       -- ^ The Template to be inserted
        -> Maybe Template -- ^ Just the new Template, or Nothing
-insert te tn te' = do
-  guard (Tag tn `elem` content te)
+insert _ (Literal _) _ = Nothing
+insert te t te' = do
+  guard (t `elem` content te)
   return Template { content = foldl trans [] (content te) }
   where
-    trans o t@(Tag tn') =
-      if tn' == tn
+    trans o t'@(Tag _) =
+      if t' == t
         then o ++ content te'
-        else o ++ [t]
+        else o ++ [t']
     trans o l = o ++ [l]
 
 -- | Output the content of the given 'Template'
@@ -250,12 +253,8 @@ toFinalText Template{..} =
     trans o (Tag _) = o
 
 -- | Get the list of 'Tag's in the given 'Template'.
-tagsOf :: Template -> [Tag]
-tagsOf Template{..} =
-  (\(Tag k) -> k) <$> filter isTag content
-  where
-    isTag (Tag _) = True
-    isTag _       = False
+tagsOf :: Template -> [Token]
+tagsOf Template{..} = filter isTag content
 
 tagsRename :: [(T.Text,T.Text)] -> Template -> Template
 tagsRename ts Template{..} =
@@ -307,11 +306,11 @@ partialProcess Template{..} c =
 --
 -- >λ>partialProcess' template context
 -- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, context = Context {variables = fromList [("text",""),("tags","")]}}
-partialProcess' :: Template -> Context -> G.Result
+partialProcess' :: Template -> Context -> Result
 partialProcess' t c@Context{..} =
-  case foldl trans ([],[]) (content t) of
+  case foldl trans (mempty,mempty) (content t) of
     (f,[]) -> Final (toTextWithContext (const T.empty) c f)
-    (p,p') -> G.Partial Template { content = p } (fromTagsList p')
+    (p,p') -> Partial Template { content = p } (fromTagsList p')
   where
     trans (!c',!ts) t' =
       case t' of

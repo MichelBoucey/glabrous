@@ -9,11 +9,11 @@ import qualified Data.HashMap.Strict  as H
 import           Data.Maybe           (fromMaybe)
 import qualified Data.Text            as T
 
-import           Text.Glabrous.Types  as G
+import           Text.Glabrous.Types
 
 toTextWithContext :: (T.Text -> T.Text) -> Context -> [Token] -> T.Text
 toTextWithContext tagDefault Context{..} ts =
-  T.concat $ trans <$> ts
+  T.concat (trans <$> ts)
   where
     trans (Tag k)     = fromMaybe (tagDefault k) (H.lookup k variables)
     trans (Literal c) = c
@@ -33,13 +33,17 @@ isLiteral :: Token -> Bool
 isLiteral (Literal _) = True
 isLiteral _           = False
 
+isTag :: Token -> Bool
+isTag (Tag _) = True
+isTag _       = False
+
 tokens :: Parser [Token]
 tokens =
   many' token
   where
     token = literal <|> tag <|> leftover
     leftover = do
-      c <- takeWhile1 $ not . content
+      c <- takeWhile1 (not . content)
       return (Literal c)
     literal = do
       c <- takeWhile1 content
