@@ -68,7 +68,7 @@ import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
-import           Data.List                (concatMap,intersperse,intersect,uncons)
+import           Data.List                (intersperse,intersect,uncons)
 import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
@@ -76,7 +76,7 @@ import           Text.Glabrous.Internal
 import           Text.Glabrous.Types
 
 
--- | Get 'Just' a new 'Template' with a new tag inside, or 'Nothing'.
+-- | Get 'Just' a new 'Template' with new tag(s) inside, or 'Nothing'.
 addTag :: Template       -- ^ The template to work on
        -> T.Text         -- ^ Text to be replaced by the new tag
        -> T.Text         -- ^ New tag's name
@@ -87,7 +87,9 @@ addTag Template{..} r n = do
   return Template { content = nc }
   where
     insertTag t t' (Literal l) =
-      intersperse (Tag t') $ (\x -> Literal x) <$> T.splitOn t l
+      filter
+        (/= (Literal T.empty))
+        (intersperse (Tag t') $ (\x -> Literal x) <$> T.splitOn t l)
     insertTag _ _ t@(Tag _) = [t]
 
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
