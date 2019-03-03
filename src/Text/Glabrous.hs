@@ -29,8 +29,8 @@ module Text.Glabrous
   , toFinalText
   , compress
   , writeTemplateFile
-  , insert
-  , insertMany
+  , insertTemplate
+  , insertManyTemplates
 
   -- * 'Context'
   , Context (..)
@@ -238,12 +238,12 @@ writeTemplateFile f t = I.writeFile f (toText t)
 -- into another one by replacing the 'Tag', or 'Nothing'.
 --
 -- >λ>insert t0 (Tag "template1") t1
-insert :: Template       -- ^ The Template to insert in
-       -> Token          -- ^ The Tag to be replaced
-       -> Template       -- ^ The Template to be inserted
-       -> Maybe Template -- ^ Just the new Template, or Nothing
-insert _ (Literal _) _ = Nothing
-insert te t te' = do
+insertTemplate :: Template       -- ^ The Template to insert in
+               -> Token          -- ^ The Tag to be replaced
+               -> Template       -- ^ The Template to be inserted
+               -> Maybe Template -- ^ Just the new Template, or Nothing
+insertTemplate _ (Literal _) _ = Nothing
+insertTemplate te t te' = do
   guard (t `elem` content te)
   return Template { content = foldl trans [] (content te) }
   where
@@ -257,8 +257,8 @@ insert te t te' = do
 -- if there is at least one tag correspondence, or 'Nothing'.
 --
 -- >λ>insertMany t0 [(Tag "template1",t1),(Tag "template2",t2)]
-insertMany :: Template -> [(Token,Template)] -> Maybe Template
-insertMany te ttps = do
+insertManyTemplates :: Template -> [(Token,Template)] -> Maybe Template
+insertManyTemplates te ttps = do
   guard (tagsOf te `intersect` (fst <$> ttps) /= mempty)
   return Template { content = foldl trans [] (content te) }
   where
