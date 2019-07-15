@@ -88,8 +88,8 @@ addTag Template{..} r n = do
   where
     insertTag t t' (Literal l) =
       filter
-        (/= (Literal T.empty))
-        (intersperse (Tag t') $ (\x -> Literal x) <$> T.splitOn t l)
+        (/= Literal T.empty)
+        (intersperse (Tag t') $ Literal <$> T.splitOn t l)
     insertTag _ _ t@(Tag _) = [t]
 
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
