@@ -1,9 +1,13 @@
+{-# LANGUAGE CPP               #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Text.Glabrous.Types where
 
 import           Data.Aeson
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap    as KM
+#endif
 import qualified Data.HashMap.Strict as H
 import qualified Data.Text           as T
 import           Data.Serialize
@@ -32,11 +36,19 @@ newtype Context =
 
 instance ToJSON Context where
   toJSON (Context h) =
+#if MIN_VERSION_aeson(2,0,0)
+    object (second String <$> KM.toList (KM.fromHashMapText h))
+#else
     object (second String <$> H.toList h)
+#endif
 
 instance FromJSON Context where
   parseJSON (Object o) = return
+#if MIN_VERSION_aeson(2,0,0)
+    Context { variables = H.fromList ((\(k,String v) -> (k,v)) <$> H.toList (KM.toHashMapText o)) }
+#else
     Context { variables = H.fromList ((\(k,String v) -> (k,v)) <$> H.toList o) }
+#endif
   parseJSON _          = fail "expected an object"
 
 data Result
