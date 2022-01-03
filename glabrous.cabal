@@ -29,7 +29,7 @@ library
                      , aeson-pretty >= 0.7.2 && < 0.9
                      , attoparsec >= 0.12.1.6 && < 0.15
                      , base >= 4.8.1.0 && < 5
-                     , bytestring >= 0.10.6 && < 0.11
+                     , bytestring >= 0.10.6 && < 0.12
                      , cereal >= 0.4.1.1 && < 0.6
                      , cereal-text >= 0.1.0 && < 0.2
                      , either >= 4.4.1 && < 5.1
