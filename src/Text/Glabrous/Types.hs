@@ -6,7 +6,7 @@ module Text.Glabrous.Types where
 
 import           Data.Aeson
 #if MIN_VERSION_aeson(2,0,0)
-import qualified Data.Aeson.KeyMap    as KM
+import qualified Data.Aeson.KeyMap   as KM
 #endif
 import qualified Data.HashMap.Strict as H
 import qualified Data.Text           as T
@@ -45,9 +45,9 @@ instance ToJSON Context where
 instance FromJSON Context where
   parseJSON (Object o) = return
 #if MIN_VERSION_aeson(2,0,0)
-    Context { variables = H.fromList ((\(k,String v) -> (k,v)) <$> H.toList (KM.toHashMapText o)) }
+    Context { variables = H.fromList (fromJSONString <$> H.toList (KM.toHashMapText o)) }
 #else
-    Context { variables = H.fromList ((\(k,String v) -> (k,v)) <$> H.toList o) }
+    Context { variables = H.fromList (fromJSONString <$> H.toList o) }
 #endif
   parseJSON _          = fail "expected an object"
 
@@ -55,4 +55,8 @@ data Result
   = Final !T.Text
   | Partial { template :: !Template, context :: !Context }
   deriving (Eq, Show)
+
+fromJSONString :: (T.Text,Value) -> (T.Text,T.Text)
+fromJSONString (k,String v) = (k,v)
+fromJSONString (_,_)        = undefined
 
