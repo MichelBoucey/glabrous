@@ -43,20 +43,20 @@ instance ToJSON Context where
 #endif
 
 instance FromJSON Context where
-  parseJSON (Object o) = return
+  parseJSON (Object o) = do
 #if MIN_VERSION_aeson(2,0,0)
-    Context { variables = H.fromList (fromJSONString <$> H.toList (KM.toHashMapText o)) }
+    let t = KM.toHashMapText o
 #else
-    Context { variables = H.fromList (fromJSONString <$> H.toList o) }
+    let t = o
 #endif
-  parseJSON _          = fail "expected an object"
+    pure Context { variables = H.fromList (fromJSONString <$> H.toList t) }
+    where
+      fromJSONString (k,String v) = (k,v)
+      fromJSONString _            = error "Expected a JSON String in second element of pair"
+  parseJSON _          = fail "Expected a JSON object"
 
 data Result
   = Final !T.Text
   | Partial { template :: !Template, context :: !Context }
   deriving (Eq, Show)
-
-fromJSONString :: (T.Text,Value) -> (T.Text,T.Text)
-fromJSONString (k,String v) = (k,v)
-fromJSONString (_,_)        = undefined
 
