@@ -304,10 +304,7 @@ tagsRename :: [(T.Text,T.Text)] -> Template -> Template
 tagsRename ts Template{..} =
   Template { content = rename <$> content }
   where
-    rename t@(Tag n) =
-      case lookup n ts of
-        Just r  -> Tag r
-        Nothing -> t
+    rename t@(Tag n) = maybe t Tag (lookup n ts)
     rename l@(Literal _) = l
 
 -- | 'True' if a 'Template' has no more 'Tag'
@@ -338,10 +335,7 @@ partialProcess Template{..} c =
     transTags ts Context{..} =
       trans <$> ts
       where
-        trans i@(Tag k) =
-          case H.lookup k variables of
-            Just v  -> Literal v
-            Nothing -> i
+        trans i@(Tag k) = maybe i Literal (H.lookup k variables)
         trans t = t
 
 -- | Process a (sub)'Context' present in the given template, and
