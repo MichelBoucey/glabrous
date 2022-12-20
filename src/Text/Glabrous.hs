@@ -241,7 +241,7 @@ writeTemplateFile f t = I.writeFile f (toText t)
 -- | get 'Just' a new 'Template' by inserting a 'Template'
 -- into another one by replacing the 'Tag', or 'Nothing'.
 --
--- >λ>insert t0 (Tag "template1") t1
+-- >λ>insertTemplate t0 (Tag "template1") t1
 insertTemplate :: Template       -- ^ The Template to insert in
                -> Token          -- ^ The Tag to be replaced
                -> Template       -- ^ The Template to be inserted
