@@ -68,7 +68,7 @@ import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
-import           Data.List                (intersperse,intersect,uncons)
+import           Data.List                (intersect, intersperse, uncons)
 import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
@@ -294,7 +294,7 @@ toFinalText Template{..} =
   foldl trans T.empty content
   where
     trans o (Literal l) = o `T.append` l
-    trans o (Tag _) = o
+    trans o (Tag _)     = o
 
 -- | Get the list of 'Tag's in the given 'Template'.
 tagsOf :: Template -> [Token]
@@ -304,7 +304,7 @@ tagsRename :: [(T.Text,T.Text)] -> Template -> Template
 tagsRename ts Template{..} =
   Template { content = rename <$> content }
   where
-    rename t@(Tag n) = maybe t Tag (lookup n ts)
+    rename t@(Tag n)     = maybe t Tag (lookup n ts)
     rename l@(Literal _) = l
 
 -- | 'True' if a 'Template' has no more 'Tag'
@@ -336,7 +336,7 @@ partialProcess Template{..} c =
       trans <$> ts
       where
         trans i@(Tag k) = maybe i Literal (H.lookup k variables)
-        trans t = t
+        trans t         = t
 
 -- | Process a (sub)'Context' present in the given template, and
 -- get either a 'Final' 'T.Text' or a new 'Template' with its unset

@@ -4,15 +4,15 @@
 
 module Text.Glabrous.Types where
 
+import           Control.Arrow       (second)
 import           Data.Aeson
 #if MIN_VERSION_aeson(2,0,0)
 import qualified Data.Aeson.KeyMap   as KM
 #endif
 import qualified Data.HashMap.Strict as H
-import qualified Data.Text           as T
 import           Data.Serialize
 import           Data.Serialize.Text ()
-import           Control.Arrow       (second)
+import qualified Data.Text           as T
 import           GHC.Generics
 
 data Token
