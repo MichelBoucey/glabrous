@@ -260,7 +260,7 @@ insertTemplate te t te' = do
 -- | get 'Just' a new 'Template' by inserting many 'Template's,
 -- if there is at least one tag correspondence, or 'Nothing'.
 --
--- >λ>insertMany t0 [(Tag "template1",t1),(Tag "template2",t2)]
+-- >λ>insertManyTemplates t0 [(Tag "template1",t1),(Tag "template2",t2)]
 insertManyTemplates :: Template -> [(Token,Template)] -> Maybe Template
 insertManyTemplates te ttps = do
   guard (tagsOf te `intersect` (fst <$> ttps) /= mempty)
