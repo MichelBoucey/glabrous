@@ -1,5 +1,5 @@
 name:                glabrous
-version:             2.0.6.2
+version:             2.0.6.3
 synopsis:            A template DSL library
 description:         A minimalistic, Mustache-like syntax, truly logic-less,
                      pure Text template DSL library
@@ -8,13 +8,13 @@ license:             BSD3
 license-file:        LICENSE
 author:              Michel Boucey
 maintainer:          michel.boucey@gmail.com
-copyright:           (c) 2016-2023 - Michel Boucey
+copyright:           (c) 2016-2024 - Michel Boucey
 category:            Text, Web
 build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
 
-Tested-With: GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.8 || ==9.4.5 || ==9.6.2
+Tested-With: GHC ==8.8.4 || ==8.10.7 || ==9.0.2 || ==9.2.8 || ==9.4.8 || ==9.6.3 || ==9.8.1
 
 source-repository head
   type:     git
@@ -29,11 +29,11 @@ library
                      , aeson-pretty >= 0.7.2 && < 0.9
                      , attoparsec >= 0.12.1.6 && < 0.15
                      , base >= 4.8.1.0 && < 5
-                     , bytestring >= 0.10.6 && < 0.12
+                     , bytestring >= 0.10.6 && < 0.13
                      , cereal >= 0.4.1.1 && < 0.6
                      , cereal-text >= 0.1.0 && < 0.2
                      , either >= 4.4.1 && < 5.1
-                     , text >= 1.2.1 && < 1.3 || == 2.0.*
+                     , text >= 1.2.1 && < 2.2
                      , unordered-containers >= 0.2.5.1 && < 0.3
 
   default-language:    Haskell2010
