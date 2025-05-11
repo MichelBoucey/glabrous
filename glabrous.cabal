@@ -27,7 +27,7 @@ Tested-With:
 
 source-repository head
   type:     git
-  location: git://github.com/MichelBoucey/glabrous.git
+  location: https://github.com/MichelBoucey/glabrous.git
 
 library
   hs-source-dirs:      src
