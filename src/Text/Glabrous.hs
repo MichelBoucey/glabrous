@@ -95,24 +95,11 @@ addTag Template{..} r n = do
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
 compress Template{..} =
-  Template { content = go content [] }
+  Template { content = go [] content }
   where
-    go ts !ac = do
-      let (a,b) = span isLiteral ts
-          u = uncons b
-      if not (null a)
-        then case u of
-          Just (c,d) -> go d (ac ++ [concatLiterals a] ++ [c])
-          Nothing    -> ac ++ [concatLiterals a]
-        else case u of
-          Just (e,f) -> go f (ac ++ [e])
-          Nothing    -> ac
-      where
-        concatLiterals =
-          foldr trans (Literal "")
-          where
-            trans (Literal a) (Literal b) = Literal (a `T.append` b)
-            trans _           _           = undefined
+    go ac (Literal a : Literal b : rest) = go ac (Literal (T.append a b) : rest)
+    go ac (x : rest)                     = go (x : ac) rest
+    go ac []                             = reverse ac
 
 -- | Build an empty 'Context'.
 initContext :: Context
@@ -266,17 +253,12 @@ insertManyTemplates te ttps = do
   guard (tagsOf te `intersect` (fst <$> ttps) /= mempty)
   return Template { content = foldl trans [] (content te) }
   where
+    hm = H.fromList [(k, t) | (Tag k, t) <- ttps]
     trans o li@(Literal _) = o ++ [li]
-    trans o ta@(Tag _) =
-      case lookupTemplate ta ttps of
+    trans o ta@(Tag k)     =
+      case H.lookup k hm of
         Nothing  -> o ++ [ta]
         Just te' -> o ++ content te'
-    lookupTemplate (Literal _) _ = Nothing
-    lookupTemplate _ []          = Nothing
-    lookupTemplate t (p:ps) =
-      if fst p == t
-        then Just (snd p)
-        else lookupTemplate t ps
 
 -- | Output the content of the given 'Template'
 -- as it is, with its 'Tag's, if they exist.
@@ -304,7 +286,8 @@ tagsRename :: [(T.Text,T.Text)] -> Template -> Template
 tagsRename ts Template{..} =
   Template { content = rename <$> content }
   where
-    rename t@(Tag n)     = maybe t Tag (lookup n ts)
+    hm = H.fromList ts
+    rename t@(Tag n)     = maybe t Tag (H.lookup n hm)
     rename l@(Literal _) = l
 
 -- | 'True' if a 'Template' has no more 'Tag'
@@ -346,15 +329,15 @@ partialProcess Template{..} c =
 -- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, context = Context {variables = fromList [("text",""),("tags","")]}}
 partialProcess' :: Template -> Context -> Result
 partialProcess' t c@Context{..} =
-  case foldl trans (mempty,mempty) (content t) of
-    (f,[]) -> Final (toTextWithContext (const T.empty) c f)
-    (p,p') -> Partial Template { content = p } (fromTagsList p')
+  case foldl trans ([],[]) (content t) of
+    (f,[]) -> Final (toTextWithContext (const T.empty) c (reverse f))
+    (p,p') -> Partial Template { content = reverse p } (fromTagsList (reverse p'))
   where
     trans (!c',!ts) t' =
       case t' of
         Tag k ->
           case H.lookup k variables of
-            Just v  -> (c' ++ [Literal v],ts)
-            Nothing -> (c' ++ [t'],ts ++ [k])
-        Literal _ -> (c' ++ [t'],ts)
+            Just v  -> (Literal v : c', ts)
+            Nothing -> (t' : c', k : ts)
+        Literal _ -> (t' : c', ts)
 
