@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -68,7 +69,11 @@ import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
+#if MIN_VERSION_base(4,20,0)
 import           Data.List                (intersperse, isSubsequenceOf, uncons)
+#else
+import           Data.List                (foldl', intersperse, isSubsequenceOf, uncons)
+#endif
 import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
