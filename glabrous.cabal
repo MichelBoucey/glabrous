@@ -1,20 +1,21 @@
+cabal-version:      3.0
 name:               glabrous
-version:            2.0.6.4
+version:            2.1.0.0
 synopsis:           A template DSL library
 description:
   A minimalistic, Mustache-like syntax, truly logic-less,
   pure Text template DSL library
 
 homepage:           https://github.com/MichelBoucey/glabrous
-license:            BSD3
+license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Michel Boucey
 maintainer:         michel.boucey@gmail.com
 copyright:          (c) 2016-2026 - Michel Boucey
 category:           Text, Web
 build-type:         Simple
-cabal-version:      >=1.10
 extra-source-files: README.md
+extra-doc-files:    CHANGELOG.md
 tested-with:
   GHC ==8.8.4
    || ==8.10.7

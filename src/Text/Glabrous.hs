@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE BangPatterns      #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -68,7 +69,11 @@ import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
-import           Data.List                (intersect, intersperse, uncons)
+#if MIN_VERSION_base(4,20,0)
+import           Data.List                (intersperse, isSubsequenceOf, uncons)
+#else
+import           Data.List                (foldl', intersperse, isSubsequenceOf, uncons)
+#endif
 import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
@@ -95,24 +100,11 @@ addTag Template{..} r n = do
 -- | Optimize a 'Template' content after (many) 'partialProcess'(') rewriting(s).
 compress :: Template -> Template
 compress Template{..} =
-  Template { content = go content [] }
+  Template { content = go [] content }
   where
-    go ts !ac = do
-      let (a,b) = span isLiteral ts
-          u = uncons b
-      if not (null a)
-        then case u of
-          Just (c,d) -> go d (ac ++ [concatLiterals a] ++ [c])
-          Nothing    -> ac ++ [concatLiterals a]
-        else case u of
-          Just (e,f) -> go f (ac ++ [e])
-          Nothing    -> ac
-      where
-        concatLiterals =
-          foldr trans (Literal "")
-          where
-            trans (Literal a) (Literal b) = Literal (a `T.append` b)
-            trans _           _           = undefined
+    go ac (Literal a : Literal b : rest) = go ac (Literal (T.append a b) : rest)
+    go ac (x : rest)                     = go (x : ac) rest
+    go ac []                             = reverse ac
 
 -- | Build an empty 'Context'.
 initContext :: Context
@@ -224,7 +216,7 @@ unsetContext Context {..} = do
 -- the given 'Context' are not empty.
 isSet :: Context -> Bool
 isSet Context{..} =
-  H.foldr (\v b -> b && v /= T.empty) True variables
+  H.foldl' (\b v -> b && v /= T.empty) True variables
 
 -- | Get the list of the given 'Context' variables.
 variablesOf :: Context -> [T.Text]
@@ -249,34 +241,29 @@ insertTemplate :: Template       -- ^ The Template to insert in
 insertTemplate _ (Literal _) _ = Nothing
 insertTemplate te t te' = do
   guard (t `elem` content te)
-  return Template { content = foldl trans [] (content te) }
+  return Template { content = reverse (foldl' trans [] (content te)) }
   where
     trans o t'@(Tag _) =
       if t' == t
-        then o ++ content te'
-        else o ++ [t']
-    trans o l = o ++ [l]
+        then reverse (content te') ++ o
+        else t' : o
+    trans o l = l : o
 
--- | get 'Just' a new 'Template' by inserting many 'Template's,
--- if there is at least one tag correspondence, or 'Nothing'.
+-- | get 'Just' a new 'Template' by inserting many 'Template's or 'Nothing'
+-- if specified `Tag`s are not present, and not in the exact given order.
 --
 -- >λ>insertManyTemplates t0 [(Tag "template1",t1),(Tag "template2",t2)]
 insertManyTemplates :: Template -> [(Token,Template)] -> Maybe Template
 insertManyTemplates te ttps = do
-  guard (tagsOf te `intersect` (fst <$> ttps) /= mempty)
-  return Template { content = foldl trans [] (content te) }
+  guard (isSubsequenceOf (fst <$> ttps) (tagsOf te))
+  pure Template { content = reverse (foldl' trans [] (content te)) }
   where
-    trans o li@(Literal _) = o ++ [li]
-    trans o ta@(Tag _) =
-      case lookupTemplate ta ttps of
-        Nothing  -> o ++ [ta]
-        Just te' -> o ++ content te'
-    lookupTemplate (Literal _) _ = Nothing
-    lookupTemplate _ []          = Nothing
-    lookupTemplate t (p:ps) =
-      if fst p == t
-        then Just (snd p)
-        else lookupTemplate t ps
+    hm = H.fromList [(k, t) | (Tag k, t) <- ttps]
+    trans o li@(Literal _) = li : o
+    trans o ta@(Tag k)     =
+      case H.lookup k hm of
+        Nothing  -> ta : o
+        Just te' -> reverse (content te') ++ o
 
 -- | Output the content of the given 'Template'
 -- as it is, with its 'Tag's, if they exist.
@@ -304,7 +291,8 @@ tagsRename :: [(T.Text,T.Text)] -> Template -> Template
 tagsRename ts Template{..} =
   Template { content = rename <$> content }
   where
-    rename t@(Tag n)     = maybe t Tag (lookup n ts)
+    hm = H.fromList ts
+    rename t@(Tag n)     = maybe t Tag (H.lookup n hm)
     rename l@(Literal _) = l
 
 -- | 'True' if a 'Template' has no more 'Tag'
@@ -346,15 +334,15 @@ partialProcess Template{..} c =
 -- >Partial {template = Template {content = [Literal "Some ",Tag "tags",Literal " are unused in this ",Tag "text",Literal "."]}, context = Context {variables = fromList [("text",""),("tags","")]}}
 partialProcess' :: Template -> Context -> Result
 partialProcess' t c@Context{..} =
-  case foldl trans (mempty,mempty) (content t) of
-    (f,[]) -> Final (toTextWithContext (const T.empty) c f)
-    (p,p') -> Partial Template { content = p } (fromTagsList p')
+  case foldl trans ([],[]) (content t) of
+    (f,[]) -> Final (toTextWithContext (const T.empty) c (reverse f))
+    (p,p') -> Partial Template { content = reverse p } (fromTagsList (reverse p'))
   where
     trans (!c',!ts) t' =
       case t' of
         Tag k ->
           case H.lookup k variables of
-            Just v  -> (c' ++ [Literal v],ts)
-            Nothing -> (c' ++ [t'],ts ++ [k])
-        Literal _ -> (c' ++ [t'],ts)
+            Just v  -> (Literal v : c', ts)
+            Nothing -> (t' : c', k : ts)
+        Literal _ -> (t' : c', ts)
 
