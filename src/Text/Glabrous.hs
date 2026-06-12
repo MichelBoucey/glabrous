@@ -211,7 +211,7 @@ unsetContext Context {..} = do
 -- the given 'Context' are not empty.
 isSet :: Context -> Bool
 isSet Context{..} =
-  H.foldr (\v b -> b && v /= T.empty) True variables
+  H.foldl' (\b v -> b && v /= T.empty) True variables
 
 -- | Get the list of the given 'Context' variables.
 variablesOf :: Context -> [T.Text]
@@ -236,13 +236,13 @@ insertTemplate :: Template       -- ^ The Template to insert in
 insertTemplate _ (Literal _) _ = Nothing
 insertTemplate te t te' = do
   guard (t `elem` content te)
-  return Template { content = foldl trans [] (content te) }
+  return Template { content = reverse (foldl' trans [] (content te)) }
   where
     trans o t'@(Tag _) =
       if t' == t
-        then o ++ content te'
-        else o ++ [t']
-    trans o l = o ++ [l]
+        then reverse (content te') ++ o
+        else t' : o
+    trans o l = l : o
 
 -- | get 'Just' a new 'Template' by inserting many 'Template's or 'Nothing'
 -- if specified `Tag`s are not present, and not in the exact given order.
@@ -251,14 +251,14 @@ insertTemplate te t te' = do
 insertManyTemplates :: Template -> [(Token,Template)] -> Maybe Template
 insertManyTemplates te ttps = do
   guard (isSubsequenceOf (fst <$> ttps) (tagsOf te))
-  pure Template { content = foldl trans [] (content te) }
+  pure Template { content = reverse (foldl' trans [] (content te)) }
   where
     hm = H.fromList [(k, t) | (Tag k, t) <- ttps]
-    trans o li@(Literal _) = o ++ [li]
+    trans o li@(Literal _) = li : o
     trans o ta@(Tag k)     =
       case H.lookup k hm of
-        Nothing  -> o ++ [ta]
-        Just te' -> o ++ content te'
+        Nothing  -> ta : o
+        Just te' -> reverse (content te') ++ o
 
 -- | Output the content of the given 'Template'
 -- as it is, with its 'Tag's, if they exist.
