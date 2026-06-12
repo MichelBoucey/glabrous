@@ -68,7 +68,7 @@ import           Data.Aeson               hiding (Result)
 import           Data.Aeson.Encode.Pretty (encodePretty)
 import qualified Data.ByteString.Lazy     as L
 import qualified Data.HashMap.Strict      as H
-import           Data.List                (intersect, intersperse, uncons)
+import           Data.List                (intersperse, isSubsequenceOf, uncons)
 import qualified Data.Text                as T
 import qualified Data.Text.IO             as I
 
@@ -244,14 +244,14 @@ insertTemplate te t te' = do
         else o ++ [t']
     trans o l = o ++ [l]
 
--- | get 'Just' a new 'Template' by inserting many 'Template's,
--- if there is at least one tag correspondence, or 'Nothing'.
+-- | get 'Just' a new 'Template' by inserting many 'Template's or 'Nothing'
+-- if specified `Tag`s are not present, and not in the exact given order.
 --
 -- >λ>insertManyTemplates t0 [(Tag "template1",t1),(Tag "template2",t2)]
 insertManyTemplates :: Template -> [(Token,Template)] -> Maybe Template
 insertManyTemplates te ttps = do
-  guard (tagsOf te `intersect` (fst <$> ttps) /= mempty)
-  return Template { content = foldl trans [] (content te) }
+  guard (isSubsequenceOf (fst <$> ttps) (tagsOf te))
+  pure Template { content = foldl trans [] (content te) }
   where
     hm = H.fromList [(k, t) | (Tag k, t) <- ttps]
     trans o li@(Literal _) = o ++ [li]
